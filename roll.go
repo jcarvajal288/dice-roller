@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "log"
+    "math"
     "math/rand"
     "os"
     "regexp"
@@ -11,8 +12,38 @@ import (
     "time"
 )
 
-const dieRollRegex string = `(\d+)?d\d+`
+const dieRollRegex string = `[b|w]?(\d+)?d\d+`
 const constantRegex string = `[+|-]\d+\b`
+
+func max(integers []int) int {
+    max := 0
+    for _, n := range integers {
+        if n > max {
+            max = n
+        }
+    }
+    return max
+}
+
+
+func min(integers []int) int {
+    min := math.MaxInt64
+    for _, n := range integers {
+        if n < min {
+            min = n
+        }
+    }
+    return min
+}
+
+
+func sum(integers []int) int {
+    sum := 0
+    for _, n := range integers {
+        sum += n
+    }
+    return sum
+}
 
 
 func interpretRollStatement(rollStatement string) ([]string, []string) {
@@ -26,25 +57,43 @@ func interpretRollStatement(rollStatement string) ([]string, []string) {
 
 func rollDice(dieRolls []string) int {
     sum := 0
-    random := rand.New(rand.NewSource(time.Now().UnixNano()))
+    //random := rand.New(rand.NewSource(time.Now().UnixNano()))
+    rand.Seed(time.Now().UnixNano())
     for _, dieRoll := range dieRolls {
-        dieSplit := strings.Split(dieRoll, "d")
-
-        amount, err := strconv.Atoi(dieSplit[0])
-        if err != nil {
-            amount = 1 // handle rolls like 'd6' instead of '1d6'
-        }
-
-        faces, err := strconv.Atoi(dieSplit[1])
-        if err != nil {
-            log.Fatal(err)
-        }
-
-        for n := 0; n < amount; n++ {
-            sum += random.Intn(faces) + 1
-        }
+        sum += rollDie(dieRoll)
     }
     return sum
+}
+
+func rollDie(dieRoll string) int {
+    mode := 'n' // for 'normal'
+    if dieRoll[0] == 'b' || dieRoll[0] == 'w' {
+        mode = rune(dieRoll[0])
+        dieRoll = dieRoll[1:]
+    }
+
+    dieSplit := strings.Split(dieRoll, "d")
+    dieCount, err := strconv.Atoi(dieSplit[0])
+    if err != nil {
+        dieCount = 1 // handle rolls like 'd6' instead of '1d6'
+    }
+
+    faces, err := strconv.Atoi(dieSplit[1])
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    var resultList []int
+    for n := 0; n < dieCount; n++ {
+        resultList = append(resultList, rand.Intn(faces) + 1)
+    }
+    //fmt.Printf("Rolls: %v\n", resultList)
+    if mode == 'b' {
+        return max(resultList)
+    } else if mode == 'w' {
+        return min(resultList)
+    }
+    return sum(resultList)
 }
 
 
