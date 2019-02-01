@@ -14,7 +14,7 @@ import (
 
 const dieRollRegex = `[b|w]?(\d+)?d\d+`
 const constantRegex = `[+|-]\d+\b`
-var fullRollStatementRegex = fmt.Sprintf("^%s(%s)*$", dieRollRegex, constantRegex)
+var fullRollStatementRegex = fmt.Sprintf(`^(%s[+|-]?)*(\d+)*$`, dieRollRegex)
 var verbose = false
 
 func max(integers []int) int {
