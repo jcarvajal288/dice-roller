@@ -12,8 +12,10 @@ import (
     "time"
 )
 
-const dieRollRegex string = `[b|w]?(\d+)?d\d+`
-const constantRegex string = `[+|-]\d+\b`
+const dieRollRegex = `[b|w]?(\d+)?d\d+`
+const constantRegex = `[+|-]\d+\b`
+var fullRollStatementRegex = fmt.Sprintf("^%s(%s)*$", dieRollRegex, constantRegex)
+var verbose = false
 
 func max(integers []int) int {
     max := 0
@@ -87,7 +89,9 @@ func rollDie(dieRoll string) int {
     for n := 0; n < dieCount; n++ {
         resultList = append(resultList, rand.Intn(faces) + 1)
     }
-    //fmt.Printf("Rolls: %v\n", resultList)
+    if verbose {
+        fmt.Printf("Rolls: %v\n", resultList)
+    }
     if mode == 'b' {
         return max(resultList)
     } else if mode == 'w' {
@@ -115,9 +119,39 @@ func addConstants(constants []string) int {
 }
 
 
+func parseArguments(args []string) ([]string, []string, []string) {
+    var rollStatements []string
+    var options []string
+    var malformed []string
+    fullRollStatementCompiled := regexp.MustCompile(fullRollStatementRegex)
+
+    for _, arg := range args {
+        if fullRollStatementCompiled.FindString(arg) != "" {
+            rollStatements = append(rollStatements, arg)
+        } else if arg == "-v" {
+            options = append(options, arg)
+        } else {
+            malformed = append(malformed, arg)
+        }
+    }
+    return rollStatements, options, malformed
+}
+
+
 func main() {
-    rollStatement := os.Args[1]
-    dieRolls, constants := interpretRollStatement(rollStatement)
+    rollStatements, options, malformed := parseArguments(os.Args[1:])
+    if malformed != nil {
+        fmt.Printf("ERROR: malformed argument(s): %v\n", malformed)
+        os.Exit(1)
+    }
+
+    for _, opt := range options {
+        if opt == "-v" {
+            verbose = true
+        }
+    }
+
+    dieRolls, constants := interpretRollStatement(rollStatements[0])
     dieResult := rollDice(dieRolls)
     constantResult := addConstants(constants)
     fmt.Printf("Result: %v\n", dieResult + constantResult)
