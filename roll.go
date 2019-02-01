@@ -151,8 +151,10 @@ func main() {
         }
     }
 
-    dieRolls, constants := interpretRollStatement(rollStatements[0])
-    dieResult := rollDice(dieRolls)
-    constantResult := addConstants(constants)
-    fmt.Printf("Result: %v\n", dieResult + constantResult)
+    for _, rollStatement := range rollStatements {
+        dieRolls, constants := interpretRollStatement(rollStatement)
+        dieResult := rollDice(dieRolls)
+        constantResult := addConstants(constants)
+        fmt.Printf("Result: %v\n", dieResult + constantResult)
+    }
 }
